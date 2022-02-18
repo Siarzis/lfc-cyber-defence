@@ -7,32 +7,63 @@ s = tf('s')
 # area is defined by its Transfer Function. The system converges
 
 # Parameters
-Kps, Tps = 1, 20
-Kg, Tg = 1, 0.8
-Kt, Tt = 1, 0.3
-R = 2.4
+Kps1, Tps1 = 120, 20
+Kg1, Tg1 = 1, 0.08
+Kt1, Tt1 = 1, 0.5
+R1 = 2.4
+B1 = 0.425
 
-# Transfer function of Generator
-generator = Kps / (1 + Tps*s)
 
-# Transfer functions of Governor and Turbine
-governor = Kg / (1 + Tg*s)
-turbine = Kt / (1 + Tt*s)
+A = [[-1/Tps1, Kps1/Tps1, 0, 0, 0, 0, -Kps1/Tps1, 0, 0],
+	 [0, -1/Tt1, 1/Tt1, 0, 0, 0, 0, 0, 0],
+	 [-1/(R1*Tg1), 0, -1/Tg1, 0, 0, 0, 0, 0, 0],
+	 [0, 0, 0, -1/Tps2, Kps2/Tps2, 0, -a12*Kps2/Tps2, 0, 0],
+	 [0, 0, 0, 0, -1/Tt2, 1/Tt2, 0, 0, 0],
+	 [0, 0, 0, -1/(R2*Tg2), 0, -1/Tg2, 0, 0, 0],
+	 [T12, 0, 0, -T12, 0, 0, 0, 0, 0],
+	 [B1, 0, 0, 0, 0, 0, 1, 0, 0],
+	 [0, 0, 0, B2, 0, 0, a12, 0, 0]
+	]
 
-# Actuator as a combination Governor and Turbine
-actuator = series(governor, turbine)
+B = [[0, 0],
+	 [0, 0],
+	 [1/Tg1, 0],
+	 [0, 0],
+	 [0, 0],
+	 [0, 1/Tg2],
+	 [0, 0],
+	 [0, 0],
+	 [0, 0]
+	]
 
-# Feedback loop
-droop = -1/R
-integrator = -0.8/s
-controller = parallel(droop, integrator)
+F = [[-Kps1/Tps1, 0],
+	 [0, 0],
+	 [0, 0],
+	 [0, -Kps2/Tps2],
+	 [0, 0],
+	 [0, 0],
+	 [0, 0],
+	 [0, 0],
+	 [0, 0]
+	]
 
-# Interconnections
-sys1 = -series(controller, actuator)
-single_area = feedback(generator, sys1)
+BF = np.hstack([B, F]).tolist()
+
+C = [[1.0, 0, 0, 0, 0, 0, 0, 0, 0],
+	 [0, 0, 0, 1.0, 0, 0, 0, 0, 0],
+	 [0, 0, 0, 0, 0, 0, 0, 1.0, 0],
+	 [0, 0, 0, 0, 0, 0, 0, 0, 1.0]
+	]
+
+from pprint import pprint
+pprint(BF)
+
+
+two_area_lfc = ss(A, BF, C, 0)
 
 response = step_response(single_area)
 
 plt.plot(response.time, response.outputs)
+plt.grid()
 
 plt.show()
