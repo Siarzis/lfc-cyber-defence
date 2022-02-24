@@ -1,5 +1,5 @@
 from control import *
-from numpy.linalg import inv, solve
+from numpy.linalg import inv, matrix_rank
 import matplotlib.pyplot as plt
 
 np.set_printoptions(precision=3, suppress=True)
@@ -41,6 +41,12 @@ F = [[0],
 	 [1]
 	]
 
+# check if the desired transformation exists
+if matrix_rank(np.dot(C, E)) == matrix_rank(E):
+	print('Transformation condition satisfied.')
+else:
+	print('Transformation does not exist.')
+
 # transformation matrices
 
 # T is selected so that
@@ -57,7 +63,7 @@ T = [[-10, 0, 0, -10],
 T_inv = inv(T)
 
 S = [[1, 1],
-	 [0, 0],
+	 [-0.0001, 0],
 	]
 
 # calculate the system matrices under the new coordinate
