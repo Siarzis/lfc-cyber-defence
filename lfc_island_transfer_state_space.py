@@ -3,6 +3,7 @@ import numpy as np
 from numpy.linalg import inv, matrix_rank
 
 import cvxpy as cp
+from cvxopt import spmatrix
 
 np.set_printoptions(precision=3, suppress=True)
 
@@ -128,20 +129,28 @@ F = cp.Variable((m, p-r))
 alpha1 = cp.Variable((1,1))
 gamma = cp.Variable((1,1))
 
+# define the required identity matrices
+id1 = spmatrix(1.0, range(n-r), range(n-r))
+id2 = spmatrix(1.0,  range(m), range(m))
+zeros1 = spmatrix([], [], [],  (r, n-r))
+zeros2 = spmatrix([], [], [],  (n-r, r))
+
 a = alpha1
 
-print(P1)
-print(P1.T)
+print(id1)
+print(id2)
+print(zeros1)
+print(zeros2)
 
 LMI1 = cp.bmat([
         [X + X.T, P1, P1@A2],
         [P1, -alpha1, np.zeros((r, n-r))],
-        [A2.T@P1, np.zeros((n-r, r)), A4.T@P2+P2@A4-C4.T@Y.T-Y@C4+cp.diag(a)]
+        [A2.T@P1, np.zeros((n-r, r)), A4.T@P2+P2@A4-C4.T@Y.T-Y@C4+a@np.eye(n-r, dtype=float)]
             ])
 
 LMI2 = cp.bmat([
-        [-cp.diag(gamma), (B2.T@P2-F@C4).T],
-        [B2.T@P2-F@C4, -cp.diag(gamma)],
+        [gamma@np.eye(n-r, dtype=float), (B2.T@P2-F@C4).T],
+        [B2.T@P2-F@C4, -gamma@np.eye(m, dtype=float)],
             ])
 
 cons1 = LMI1 << 0
@@ -159,4 +168,3 @@ P2op = P2.value
 Fop = F.value
 Xop = X.value
 Yop = Y.value
-
